@@ -1,248 +1,245 @@
 # Understanding Structured Output in LangChain
 
-This document explains how to implement structured output in LangChain applications, ensuring predictable and typed responses from language models using output parsers and response schemas.
+Welcome to this comprehensive guide on using structured output in LangChain! This tutorial explains how to get structured, validated responses from language models using Pydantic models.
 
 ## Core Concepts
 
-1. **Output Parsing Architecture**
-   LangChain's structured output system provides a robust framework for getting formatted responses:
-   
-   - **Schema Definition**: Use Pydantic models to define exact response structures, including field types, descriptions, and validations.
-   
-   - **Output Parsing**: Convert free-form model responses into structured Python objects that match your defined schemas.
-   
-   - **Validation**: Automatic type checking and data validation ensure responses meet your specifications.
+1. **What is Structured Output?**
+   Think of structured output as a way to:
+   - **Format**: Get consistent response structures
+   - **Validate**: Ensure data types are correct
+   - **Parse**: Convert raw responses to usable objects
+   - **Standardize**: Maintain consistent output patterns
 
-2. **Response Schema Design**
-   Schemas define the structure and constraints of your expected outputs:
-   
-   - **Field Definitions**: Specify exact data types, descriptions, and requirements for each response component.
-   
-   - **Nested Structures**: Support for complex data structures including lists, dictionaries, and nested objects.
-   
-   - **Validation Rules**: Define constraints and requirements for each field in your response.
-
-3. **Parser Integration**
-   Parsers connect your schemas with language model outputs:
-   
-   - **Format Instructions**: Automatically generate formatting instructions for the model based on your schemas.
-   
-   - **Response Processing**: Convert raw model outputs into validated Python objects.
-   
-   - **Error Handling**: Manage parsing failures and validation errors gracefully.
-
-## Installation & Setup
-
-### Linux Setup
-
-1. **Python Environment Setup**
-   ```bash
-   # Create and activate virtual environment
-   python -m venv langchain-env
-   source langchain-env/bin/activate
-
-   # Install required packages
-   pip install langchain langchain-openai python-dotenv pydantic typing-extensions
-   ```
-
-2. **Environment Configuration**
-   ```bash
-   # Create .env file
-   touch .env
-
-   # Open with your preferred editor
-   nano .env
-   ```
-
-3. **Azure OpenAI Configuration**
-   Add these lines to your .env file:
-   ```env
-   AZURE_OPENAI_API_KEY=your_api_key
-   AZURE_OPENAI_ENDPOINT=your_endpoint
-   AZURE_OPENAI_DEPLOYMENT_NAME=your_deployment
-   AZURE_OPENAI_API_VERSION=your_api_version
-   ```
-
-4. **Validate Setup**
-   ```bash
-   # Test environment and dependencies
-   python -c """
-   from langchain_core.pydantic_v1 import BaseModel
-   from langchain.output_parsers import PydanticOutputParser
-   print('Dependencies loaded successfully!')
-   """
-   ```
-
-### Windows Setup
-
-1. **Python Environment Setup**
-   ```powershell
-   # Create and activate virtual environment
-   python -m venv langchain-env
-   .\langchain-env\Scripts\activate
-
-   # Install required packages
-   pip install langchain langchain-openai python-dotenv pydantic typing-extensions
-   ```
-
-2. **Environment Configuration**
-   ```powershell
-   # Create .env file
-   New-Item .env
-
-   # Open with Notepad
-   notepad .env
-   ```
-
-3. **Azure OpenAI Configuration**
-   Add these lines to your .env file:
-   ```env
-   AZURE_OPENAI_API_KEY=your_api_key
-   AZURE_OPENAI_ENDPOINT=your_endpoint
-   AZURE_OPENAI_DEPLOYMENT_NAME=your_deployment
-   AZURE_OPENAI_API_VERSION=your_api_version
-   ```
-
-4. **Validate Setup**
-   ```powershell
-   # Test environment and dependencies
-   python -c "from langchain_core.pydantic_v1 import BaseModel; from langchain.output_parsers import PydanticOutputParser; print('Dependencies loaded successfully!')"
+2. **Key Components**
+   ```python
+   from pydantic import BaseModel, Field
+   from langchain_core.output_parsers import PydanticOutputParser
+   from langchain_core.messages import HumanMessage, SystemMessage
+   from langchain_core.prompts import ChatPromptTemplate
    ```
 
 ## Implementation Breakdown
 
-1. **Schema Definition**
+1. **Defining the Schema**
    ```python
    class MovieReview(BaseModel):
-       """Schema for structured movie reviews."""
        title: str = Field(description="The title of the movie")
-       rating: float = Field(description="Rating from 0.0 to 10.0")
-       pros: List[str] = Field(description="List of positive aspects")
-       cons: List[str] = Field(description="List of negative aspects")
-       summary: str = Field(description="Brief summary of the review")
+       year: int = Field(description="The release year")
+       rating: int = Field(description="Rating from 1-10", ge=1, le=10)
+       review: str = Field(description="Brief review")
+       tags: List[str] = Field(description="Genre or theme tags")
+       director: Optional[str] = Field(
+           description="Movie's director",
+           default=None
+       )
+   
+       model_config = {
+           "json_schema_extra": {
+               "examples": [{
+                   "title": "The Matrix",
+                   "year": 1999,
+                   "rating": 9,
+                   # ... more example data
+               }]
+           }
+       }
    ```
-   This pattern shows:
-   - Clear field definitions
+   
+   Key points:
    - Type annotations
    - Field descriptions
-   - Validation constraints
+   - Validation rules
+   - Example data
+   - Optional fields
 
-2. **Parser Configuration**
+2. **Setting Up the Parser**
    ```python
    # Create parser from schema
-   parser = PydanticOutputParser(pydantic_object=MovieReview)
+   pydantic_parser = PydanticOutputParser(pydantic_object=MovieReview)
    
-   # Get formatting instructions
-   format_instructions = parser.get_format_instructions()
-   ```
-   This demonstrates:
-   - Parser initialization
-   - Format instruction generation
-   - Schema integration
-
-3. **Model Integration**
-   ```python
-   system_msg = SystemMessage(content=f"""
-       You are a movie critic who provides structured reviews.
-       Format your response according to this schema:
-       {parser.get_format_instructions()}
+   # Create system message with format instructions
+   system_msg = SystemMessage(content="""
+   You are a film critic. Respond with a JSON object that follows this schema:
+   {
+     "title": "movie title (string)",
+     "year": release year (integer),
+     "rating": rating (integer from 1-10),
+     ...
+   }
    """)
-   
-   response = chat_model.invoke([system_msg, human_msg])
-   structured_review = parser.parse(response.content)
    ```
-   This shows:
-   - Model instruction
-   - Response parsing
-   - Object conversion
+   
+   Important aspects:
+   - Schema association
+   - Format instructions
+   - Clear expectations
+   - Response structure
+
+3. **Creating the Chain**
+   ```python
+   # Build the chain
+   prompt = ChatPromptTemplate.from_messages([system_msg, human_msg])
+   chain = prompt | chat | pydantic_parser
+   
+   # Use the chain
+   response = chain.invoke({"input": "Review the movie 'Inception'"})
+   ```
+
+## Example Usage
+
+1. **Basic Review**
+   ```python
+   # Get a single review
+   response = chain.invoke({"input": "Review 'Inception'"})
+   print(f"Title: {response.title}")
+   print(f"Rating: {response.rating}/10")
+   print(f"Review: {response.review}")
+   ```
+
+2. **Multiple Reviews**
+   ```python
+   # Compare multiple movies
+   for movie in ["The Matrix", "Blade Runner"]:
+       response = chain.invoke({"input": f"Review '{movie}'"})
+       print(f"\n{response.title} ({response.year})")
+       print(f"Rating: {response.rating}/10")
+   ```
 
 ## Best Practices
 
-1. **Schema Design Principles**
-   
-   - **Clear Field Names**:
-     ```python
-     class WeatherForecast(BaseModel):
-         temperature: float = Field(
-             description="Temperature in Celsius",
-             ge=-50.0,  # Greater than or equal to -50
-             le=50.0    # Less than or equal to 50
-         )
-     ```
-   
-   - **Comprehensive Descriptions**:
-     ```python
-     class ProductReview(BaseModel):
-         product_name: str = Field(
-             description="Full product name including brand and model"
-         )
-         user_rating: int = Field(
-             description="Rating from 1 to 5 stars",
-             ge=1,
-             le=5
-         )
-     ```
+1. **Schema Design**
+   ```python
+   class MovieReview(BaseModel):
+       # Use clear field names
+       title: str = Field(description="...")
+       # Add validation
+       rating: int = Field(ge=1, le=10)
+       # Provide defaults when appropriate
+       director: Optional[str] = Field(default=None)
+   ```
 
-2. **Error Handling**
+2. **System Messages**
+   ```python
+   system_msg = SystemMessage(content="""
+   Ensure your response:
+   - Uses the exact field names
+   - Provides appropriate data types
+   - Includes all required fields
+   - Follows JSON format
+   """)
+   ```
+
+3. **Error Handling**
    ```python
    try:
-       parsed_result = parser.parse(response.content)
-   except ValidationError as e:
-       print(f"Schema validation failed: {e}")
-       # Handle invalid response
+       response = chain.invoke(input_data)
    except Exception as e:
-       print(f"Parsing failed: {e}")
-       # Handle other errors
+       print(f"Error parsing response: {str(e)}")
+       # Handle the error appropriately
    ```
+
+## Example Output
+
+When running `python 006_structured_output.py`, you'll see:
+
+```
+Demonstrating LangChain Structured Output...
+
+Example 1: Basic Movie Review
+Structured Review for Inception:
+Title: Inception
+Year: 2010
+Rating: 9/10
+Review: Inception is a mind-bending thriller...
+Tags: Science Fiction, Thriller, Action...
+Director: Christopher Nolan
+
+Example 2: Multiple Movie Reviews
+Comparison of Sci-Fi Classics:
+
+The Matrix (1999)
+Rating: 9/10
+Tags: sci-fi, action, cyberpunk
+Director: The Wachowskis
+
+Blade Runner (1982)
+Rating: 8/10
+Tags: sci-fi, neo-noir, dystopian
+Director: Ridley Scott
+```
 
 ## Common Patterns
 
-1. **Complex Data Structures**
+1. **Field Validation**
    ```python
-   class AnalysisResult(BaseModel):
-       main_points: List[str]
-       metadata: Dict[str, str]
-       confidence_score: float
-       timestamp: datetime
+   rating: int = Field(
+       description="Rating from 1-10",
+       ge=1,  # Greater than or equal to 1
+       le=10  # Less than or equal to 10
+   )
    ```
 
-2. **Nested Schemas**
+2. **Optional Fields**
    ```python
-   class Author(BaseModel):
-       name: str
-       bio: str
+   tags: Optional[List[str]] = Field(
+       description="Optional tags",
+       default_factory=list
+   )
+   ```
 
-   class Book(BaseModel):
-       title: str
-       author: Author
-       publication_year: int
+3. **Example Data**
+   ```python
+   model_config = {
+       "json_schema_extra": {
+           "examples": [
+               # Provide clear examples
+           ]
+       }
+   }
+   ```
+
+## Common Issues and Solutions
+
+1. **Type Mismatches**
+   ```python
+   # Problem: Model returns string for year
+   "year": "1999"
+   
+   # Solution: Add type conversion
+   year: int = Field(description="Year as integer")
+   ```
+
+2. **Missing Fields**
+   ```python
+   # Problem: Required field missing
+   # Solution: Add default or make optional
+   director: Optional[str] = Field(default=None)
+   ```
+
+3. **Invalid Values**
+   ```python
+   # Problem: Rating out of range
+   # Solution: Add validation
+   rating: int = Field(ge=1, le=10)
    ```
 
 ## Resources
 
 1. **Official Documentation**
-   - Pydantic Schema Guide
-   - Output Parser Documentation
-   - Type Hints Reference
+   - **Main Guide**: https://python.langchain.com/docs/concepts/structured_outputs/
+   - **Overview**: https://python.langchain.com/docs/concepts/structured_outputs/#overview
+   - **Key Concepts**: https://python.langchain.com/docs/concepts/structured_outputs/#key-concepts
+   - **Recommended Usage**: https://python.langchain.com/docs/concepts/structured_outputs/#recommended-usage
+   - **Schema Definition**: https://python.langchain.com/docs/concepts/structured_outputs/#schema-definition
+   - **Returning Structured Output**: https://python.langchain.com/docs/concepts/structured_outputs/#returning-structured-output
+   - **JSON Mode**: https://python.langchain.com/docs/concepts/structured_outputs/#json-mode
+   - **Structured Output Method**: https://python.langchain.com/docs/concepts/structured_outputs/#structured-output-method
 
-2. **Additional Learning**
-   - Schema Design Patterns
-   - Validation Strategies
-   - Error Handling Techniques
-
-## Key Takeaways
-
-1. **Schema Benefits**
-   - Type safety and validation
-   - Predictable responses
-   - Easy data handling
-
-2. **Implementation Success**
-   - Clear schema definitions
-   - Proper error handling
-   - Comprehensive validation
-
-3. **Advanced Usage**
-   - Complex data structures
-   - Custom validators
-   - Nested schemas
+Remember:
+- Define clear schemas
+- Provide examples
+- Handle errors gracefully
+- Validate inputs
+- Document fields
+- Test edge cases

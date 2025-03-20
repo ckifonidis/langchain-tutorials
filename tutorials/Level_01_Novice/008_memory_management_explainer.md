@@ -235,9 +235,13 @@ This document explains how to implement and use different types of memory in Lan
 ## Resources
 
 1. **Official Documentation**
-   - Memory Types Guide
-   - Implementation Patterns
-   - Best Practices
+   - **Main Guide**: https://python.langchain.com/docs/concepts/memory/
+   - **What is Memory?**: https://langchain-ai.github.io/langgraph/concepts/memory/#what-is-memory
+   - **Short-term Memory**: https://langchain-ai.github.io/langgraph/concepts/memory/#short-term-memory
+   - **Long-term Memory**: https://langchain-ai.github.io/langgraph/concepts/memory/#long-term-memory
+   - **Memory Types**: https://langchain-ai.github.io/langgraph/concepts/memory/#memory-types
+   - **Writing Memories**: https://langchain-ai.github.io/langgraph/concepts/memory/#writing-memories
+   - **Message Removal**: https://langchain-ai.github.io/langgraph/concepts/memory/#knowing-when-to-remove-messages
 
 2. **Additional Learning**
    - Memory Management Strategies

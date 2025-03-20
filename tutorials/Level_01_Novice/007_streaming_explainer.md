@@ -230,21 +230,14 @@ This document explains how to implement and use streaming capabilities in LangCh
 ## Resources
 
 1. **Official Documentation**
-   -** Streaming Overview**: https://python.langchain.com/docs/concepts/streaming/
-   - **Streaming Concepts**: https://python.langchain.com/docs/concepts/streaming/#streaming
-   - **Stream Events**: https://python.langchain.com/docs/concepts/stream/
-   - **Async Streaming**: https://python.langchain.com/docs/concepts/streaming/#streaming-1
-
-2. **Advanced Features**
-    **Callbacks**: https://python.langchain.com/docs/concepts/callbacks/
-   - **Async Stream Events**: https://python.langchain.com/docs/concepts/astream_events/
-   - **Batch Processing**: https://python.langchain.com/docs/concepts/batch/
-
-3. **Related Concepts**
- -  **AIMessageChunk**: https://python.langchain.com/docs/concepts/aimessagechunk/
-   - **Caching**: https://python.langchain.com/docs/concepts/caching/
-   -**Tokenr Management**: https://python.langchain.com/docs/concepts/tokens/
-   - **Tokenization**: https://python.langchain.com/docs/concepts/tokenization/
+   - **Streaming**: https://python.langchain.com/docs/concepts/streaming/
+   - **Overview**: https://python.langchain.com/docs/concepts/streaming/#overview  
+   - **What to stream in LLM applications**: https://python.langchain.com/docs/concepts/streaming/#what-to-stream-in-llm-applications  
+   - **Streaming APIs**: https://python.langchain.com/docs/concepts/streaming/#streaming-apis  
+   - **Writing custom data to the stream**: https://python.langchain.com/docs/concepts/streaming/#writing-custom-data-to-the-stream  
+   - **"Auto-Streaming" Chat Models**: https://python.langchain.com/docs/concepts/streaming/#auto-streaming-chat-models  
+   - **Async Programming**: https://python.langchain.com/docs/concepts/streaming/#async-programming  
+   - **Related Resources**: https://python.langchain.com/docs/concepts/streaming/#related-resources
 
 ## Key Takeaways
 

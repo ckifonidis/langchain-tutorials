@@ -1,170 +1,246 @@
 # Understanding Tool Calling in LangChain
 
-This document explains how to implement tool calling in LangChain, demonstrating how language models can programmatically interact with tools through structured function calling.
-
-Note: For setup instructions and package requirements, please refer to `USAGE_GUIDE.md` in the root directory.
+Welcome to this comprehensive guide on tool calling in LangChain! This tutorial explains how language models can use tools programmatically through structured function calling. We'll break down every component and concept to make it easily understandable.
 
 ## Core Concepts
 
-1. **Tool Calling Architecture**
-   LangChain's tool calling system enables models to interact with external tools:
-   
-   - **Function-Based Tools**: Tools are defined as Python functions with clear input/output specifications, making them easy to create and maintain.
-   
-   - **Input Schemas**: Pydantic models define the structure and validation rules for tool inputs, ensuring type safety and proper documentation.
-   
-   - **Tool Decoration**: The `@tool` decorator simplifies tool creation by automatically handling function conversion and integration.
+1. **What are Tools?**
+   Tools are functions that language models can use to:
+   - **Perform Actions**: Get data or execute operations
+   - **Access Information**: Retrieve external data
+   - **Process Data**: Transform or analyze information
+   - **Interact**: Interface with external systems
 
-2. **Input Schema Design**
-   Pydantic models provide structured input validation:
-   
-   - **Type Annotations**: Clear definition of expected input types and formats.
-   
-   - **Field Descriptions**: Documentation that helps models understand parameter purposes.
-   
-   - **Validation Rules**: Built-in checks for input correctness.
+2. **Key Components**
+   ```python
+   from langchain_core.tools import BaseTool
+   from langchain_openai import AzureChatOpenAI
+   from langchain_core.messages import HumanMessage, SystemMessage
+   from langchain_core.utils.function_calling import convert_to_openai_function
+   ```
 
-3. **Tool Integration**
-   Tools connect with models through:
-   
-   - **Automatic Registration**: Tools are automatically formatted for model use.
-   
-   - **Context Awareness**: Models understand tool capabilities through descriptions.
-   
-   - **Result Processing**: Standardized handling of tool outputs.
-
-## Implementation Breakdown
+## Code Breakdown
 
 1. **Tool Definition**
    ```python
-   @tool(args_schema=WeatherInput)
-   def get_weather(city: str) -> Dict[str, Union[float, str]]:
-       """Get current weather information for a specific city."""
-       # Tool implementation
+   class WeatherTool(BaseTool):
+       name: str = "weather"
+       description: str = "Get current weather information for a specific city"
+       
+       def _run(self, city: str) -> str:
+           weather_data = {
+               "New York": {"temp": 22.5, "condition": "sunny"},
+               "London": {"temp": 18.0, "condition": "cloudy"},
+               # ... more cities
+           }
+           city = city.strip().title()
+           if city not in weather_data:
+               return f"No weather data available for {city}..."
+           data = weather_data[city]
+           return f"In {city}, it's currently {data['condition']}..."
    ```
-   This shows:
-   - Clear tool identification
-   - Parameter specification
-   - Return type definition
+   
+   Key points:
+   - Inherits from BaseTool
+   - Defines name and description
+   - Implements _run method
+   - Handles input validation
+   - Returns formatted output
 
-2. **Tool Integration**
+2. **Message Processing**
    ```python
-   chat_model = AzureChatOpenAI(
-       azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-       azure_deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME"),
-       model="gpt-4"  # Model must support function calling
-   )
-   
-   # Prepare tools for use
-   tools = [get_weather, get_time]
+   def process_response(messages, functions, tools, chat_model):
+       response = chat_model.invoke(messages, functions=functions)
+       while response.additional_kwargs.get("function_call"):
+           # Extract function call details
+           fc = response.additional_kwargs["function_call"]
+           fname = fc.get("name")
+           fargs_str = fc.get("arguments", "{}")
+           
+           # Parse arguments and execute tool
+           fargs = json.loads(fargs_str)
+           tool_result = None
+           for tool in tools:
+               if tool.name == fname:
+                   tool_result = tool._run(**fargs)
+                   break
+           
+           # Append result and continue conversation
+           if tool_result:
+               messages.append(HumanMessage(content=tool_result))
+               response = chat_model.invoke(messages, functions=functions)
    ```
-   This demonstrates:
-   - Model configuration
-   - Tool preparation
-   - Function calling support
+   
+   Process flow:
+   1. Model generates response
+   2. Check for function calls
+   3. Extract function details
+   4. Execute appropriate tool
+   5. Add result to conversation
+   6. Continue until complete
 
-3. **Tool Usage**
+3. **Tool Registration**
    ```python
-   response = chat_model.invoke(
-       messages,
-       tools=tools,
-       tool_choice="auto"
-   )
+   # Initialize tools
+   weather_tool = WeatherTool()
+   time_tool = TimeTool()
+   tools = [weather_tool, time_tool]
+
+   # Convert to OpenAI functions
+   functions = [convert_to_openai_function(t) for t in tools]
    ```
-   This shows:
-   - Message preparation
-   - Tool availability
-   - Automatic tool selection
-
-## Best Practices
-
-1. **Tool Design**
    
-   - **Clear Documentation**:
-     ```python
-     @tool
-     def get_data(query: str) -> Dict[str, Any]:
-         """
-         Retrieve specific data based on query.
-         
-         Args:
-             query: Search string for data retrieval
-             
-         Returns:
-             Dictionary containing retrieved data or error message
-         """
-     ```
-   
-   - **Type Safety**:
-     ```python
-     from typing import Optional
-     
-     @tool
-     def process_item(
-         item_id: int,
-         options: Optional[Dict[str, str]] = None
-     ) -> Dict[str, Any]:
-         """Process item with optional parameters."""
-     ```
+   Important steps:
+   - Create tool instances
+   - Collect tools in list
+   - Convert to function format
+   - Prepare for model use
+
+## Example Usage
+
+```python
+# System setup
+system_msg = SystemMessage(content="""
+    You are a helpful assistant with access to tools for checking weather 
+    and time. Use these tools when asked about weather conditions or 
+    current time. Available cities: New York, London, Tokyo, Paris.
+""")
+
+# Weather query
+human_msg = HumanMessage(content="What's the weather like in Tokyo?")
+messages = [system_msg, human_msg]
+response = process_response(messages, functions, tools, chat_model)
+
+# Expected output:
+# "In Tokyo, it's currently rainy with a temperature of 25.0°C."
+```
+
+## Advanced Features
+
+1. **Asynchronous Support**
+   ```python
+   async def _arun(self, city: str) -> str:
+       return self._run(city)  # Async version of tool execution
+   ```
 
 2. **Error Handling**
    ```python
-   @tool
-   def safe_operation(input_data: str) -> Dict[str, Any]:
-       try:
-           result = process_data(input_data)
-           return {"status": "success", "data": result}
-       except Exception as e:
-           return {"status": "error", "message": str(e)}
+   try:
+       fargs = json.loads(fargs_str)
+   except Exception:
+       fargs = {}  # Fallback to empty args
    ```
+
+3. **Multiple Tools**
+   ```python
+   # Handle combined queries
+   "What's the weather in London and what time is it?"
+   # Model will use both tools sequentially
+   ```
+
+## Best Practices
+
+1. **Tool Definition**
+   - Clear names and descriptions
+   - Input validation
+   - Error handling
+   - Documentation
+
+2. **Message Management**
+   - Track conversation context
+   - Handle tool outputs
+   - Maintain message order
+   - Clean responses
+
+3. **System Messages**
+   - Clear instructions
+   - Tool availability
+   - Usage guidelines
+   - Limitations
 
 ## Common Patterns
 
-1. **Chained Tools**
+1. **Sequential Tool Use**
    ```python
-   @tool
-   def combined_info(location: str) -> Dict[str, Any]:
-       """Get both weather and time for a location."""
-       weather = get_weather(location)
-       time = get_time("24h")
-       return {
-           "weather": weather,
-           "time": time
-       }
+   # Weather check followed by time
+   response1 = weather_tool._run("London")
+   response2 = time_tool._run("12h")
    ```
 
-2. **Input Validation**
+2. **Error Recovery**
    ```python
-   class ValidatedInput(BaseModel):
-       value: int = Field(..., ge=0, le=100)
-       mode: str = Field(..., pattern="^(fast|slow)$")
+   if city not in weather_data:
+       return f"No weather data available for {city}. Available cities: ..."
+   ```
+
+## Example Outputs
+
+```plaintext
+First Example (Weather):
+In Tokyo, it's currently rainy with a temperature of 25.0°C.
+
+Second Example (Time):
+The current time is 02:30 PM.
+
+Third Example (Combined):
+In London, it's cloudy with a temperature of 18.0°C, and the current time is 02:30 PM.
+```
+
+## Common Issues and Solutions
+
+1. **Tool Not Found**
+   ```python
+   if tool_result is None:
+       return f"Tool '{fname}' not available"
+   ```
+
+2. **Invalid Arguments**
+   ```python
+   try:
+       fargs = json.loads(fargs_str)
+   except json.JSONDecodeError:
+       return "Invalid arguments provided"
+   ```
+
+3. **Response Processing**
+   ```python
+   # Handle empty or invalid responses
+   if not response.additional_kwargs:
+       return response.content
    ```
 
 ## Resources
 
 1. **Official Documentation**
-   - Tool Decoration Guide
-   - Input Schema Reference
-   - Function Calling Documentation
+   - **Main Guide**: https://python.langchain.com/docs/concepts/tools/
+   - **Overview**: https://python.langchain.com/docs/concepts/tools/#overview
+   - **Key Concepts**: https://python.langchain.com/docs/concepts/tools/#key-concepts
+   - **Tool Interface**: https://python.langchain.com/docs/concepts/tools/#tool-interface
 
-2. **Additional Learning**
-   - Pydantic Integration
-   - Type Hint Usage
-   - Error Handling Patterns
-
-## Key Takeaways
-
-1. **Modern Tool Design**
-   - Use function decorators
-   - Define clear schemas
-   - Implement type safety
-
-2. **Integration Practices**
-   - Proper tool registration
-   - Automatic tool choice
-   - Result handling
+2. **Tool Creation and Usage**
+   - **@tool Decorator**: https://python.langchain.com/docs/concepts/tools/#create-tools-using-the-tool-decorator
+   - **Direct Tool Usage**: https://python.langchain.com/docs/concepts/tools/#use-the-tool-directly
+   - **Tool Inspection**: https://python.langchain.com/docs/concepts/tools/#inspect
+   - **Schema Configuration**: https://python.langchain.com/docs/concepts/tools/#configuring-the-schema
 
 3. **Advanced Features**
-   - Input validation
-   - Error management
-   - Tool composition
+   - **Tool Artifacts**: https://python.langchain.com/docs/concepts/tools/#tool-artifacts
+   - **Special Type Annotations**: https://python.langchain.com/docs/concepts/tools/#special-type-annotations
+   - **InjectedToolArg**: https://python.langchain.com/docs/concepts/tools/#injectedtoolarg
+   - **RunnableConfig**: https://python.langchain.com/docs/concepts/tools/#runnableconfig
+
+4. **Additional Resources**
+   - **InjectedState**: https://python.langchain.com/docs/concepts/tools/#injectedstate
+   - **InjectedStore**: https://python.langchain.com/docs/concepts/tools/#injectedstore
+   - **Best Practices**: https://python.langchain.com/docs/concepts/tools/#best-practices
+   - **Toolkits**: https://python.langchain.com/docs/concepts/tools/#toolkits
+   - **Interface Guide**: https://python.langchain.com/docs/concepts/tools/#interface
+   - **Related Resources**: https://python.langchain.com/docs/concepts/tools/#related-resources
+
+Remember:
+- Define clear tool interfaces
+- Handle errors gracefully
+- Process responses carefully
+- Maintain conversation context
+- Document tool capabilities
+- Test edge cases
