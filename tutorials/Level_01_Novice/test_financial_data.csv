@@ -1,0 +1,6 @@
+date,amount,type,description
+2025-01-01,5000.00,deposit,Initial investment
+2025-01-02,7500.00,transfer,Portfolio allocation
+2025-01-03,2500.00,withdrawal,Monthly expenses
+2025-01-04,15000.00,deposit,Additional investment
+2025-01-05,4500.00,transfer,Stock purchase

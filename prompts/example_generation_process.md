@@ -13,14 +13,7 @@ You are tasked with generating 400 LangChain code examples following the style a
 ├── tutorials/              # Main examples directory
 │   ├── Level_01_Novice
 │   ├── Level_02_Advanced_Novice
-|   ├── Level_03_Competent_Beginner
-|   ├── Level_04_Intermediate
-|   ├── Level_05_Advanced_Intermediate
-|   ├── Level_06_Proficient
-|   ├── Level_07_Skilled_Practitioner
-|   ├── Level_08_Expert
-|   ├── Level_09_Master
-|   └── Level_10_Grandmaster
+│   └── [...through Level_10_Grandmaster]
 └── index.md               # General information about all examples
 ```
 
