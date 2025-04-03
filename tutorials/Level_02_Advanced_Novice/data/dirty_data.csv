@@ -1,0 +1,11 @@
+id,age,income,loan_amount,loan_status
+1,25,50000,2000,approved
+2,35,60000,3000,denied
+3,45,70000,4000,approved
+4,30,80000,5000,denied
+5,40,90000,6000,approved
+6,50,100000,7000,denied
+7,55,110000,8000,approved
+8,60,120000,9000,denied
+9,65,130000,10000,approved
+10,70,140000,11000,denied

@@ -1,0 +1,42 @@
+Q1 2025 Financial Report
+=======================
+
+Executive Summary
+----------------
+Strong performance in Q1 2025 with significant growth across all key metrics.
+
+Key Performance Indicators
+-------------------------
+- Revenue: €150M (+15% YoY)
+- Operating Profit: €45M (+12% YoY)
+- New Accounts: 25,000 (+25%)
+- Active Users: 1.2M (+18%)
+- Mobile App Usage: 85% (+10%)
+- Transaction Volume: €2.5B (+20%)
+
+Department Performance
+--------------------
+1. Retail Banking
+   - New account growth: 15%
+   - Mobile banking adoption: 85%
+   - Customer satisfaction: 4.5/5
+   - Net Promoter Score: 65
+
+2. Corporate Banking
+   - New business accounts: +10%
+   - Transaction volume: €1.2B
+   - Trade finance growth: 8%
+   - Corporate loans: €500M
+
+Risk Metrics
+-----------
+- NPL Ratio: 1.2%
+- Capital Adequacy: 15.5%
+- Liquidity Coverage: 125%
+- Operational Risk Events: -15%
+
+Future Outlook
+-------------
+- Expected revenue growth: 18%
+- Planned digital initiatives: 5
+- New product launches: 3

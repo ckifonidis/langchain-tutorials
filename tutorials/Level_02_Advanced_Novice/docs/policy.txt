@@ -1,0 +1,52 @@
+Data Privacy Policy
+==================
+
+1. Introduction
+--------------
+This policy outlines our commitment to protecting customer data and ensuring GDPR compliance.
+
+2. Data Collection
+----------------
+We collect only necessary data for:
+- Account management
+- Transaction processing
+- Regulatory compliance
+- Service improvement
+
+3. Data Protection
+----------------
+- Encryption at rest and in transit
+- Access control and monitoring
+- Regular security audits
+- Data retention limits
+
+4. Customer Rights
+----------------
+Customers have the right to:
+- Access their data
+- Request corrections
+- Data portability
+- Request deletion
+- Object to processing
+
+5. Compliance Measures
+--------------------
+- Regular staff training
+- Data protection officer
+- Impact assessments
+- Breach notification
+- Third-party audits
+
+6. Data Retention
+---------------
+- Account data: 7 years
+- Transaction data: 10 years
+- Marketing preferences: 2 years
+- Security logs: 18 months
+
+7. Contact Information
+--------------------
+Data Protection Officer:
+Email: dpo@bank.com
+Phone: +1-555-0123
+Office: Data Protection Unit
