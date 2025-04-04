@@ -34,9 +34,11 @@ def init_chat_model():
     """
     # Primary implementation using Azure OpenAI
     model = AzureChatOpenAI(
-        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-        azure_deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME"),
-        openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION")
+         azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+         azure_deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME"),
+         openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
+         model="gpt-4o",
+         temperature=0
     )
 
     # Alternative implementations (commented):

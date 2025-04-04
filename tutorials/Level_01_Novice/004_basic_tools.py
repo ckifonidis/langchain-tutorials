@@ -3,10 +3,33 @@ LangChain Basic Tools Example
 
 This example demonstrates how to create and use custom tools in LangChain.
 Compatible with LangChain v0.3 and Pydantic v2.
-
-Note: For setup instructions and package requirements, please refer to
-USAGE_GUIDE.md in the root directory.
 """
+
+prompt_template = """
+Answer the following questions as best you can. You have access to the following tools:
+
+{tools}
+
+Use the following format exactly:
+
+Question: the input question you must answer
+Thought: you should always think about what to do
+Action: the action to take, should be one of [{tool_names}]
+Action Input: the input to the action
+Observation: the result of the action
+... (this Thought/Action/Action Input/Observation can repeat N times)
+Thought: I now know the final answer
+Final Answer: the final answer to the original input question
+
+Remember, once you have the result from a tool, you should move toward providing a Final Answer rather than using the tool again with the same input.
+
+Begin!
+
+{agent_scratchpad}
+
+Question: {input}
+Thought:"""
+
 
 import os
 from typing import Dict, Any
@@ -15,6 +38,9 @@ from pydantic import BaseModel, Field
 from langchain.tools import BaseTool
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import AzureChatOpenAI
+from langchain.agents import AgentExecutor, create_react_agent
+from langchain_core.tools import Tool
+from langchain.prompts import ChatPromptTemplate
 
 # Load environment variables
 load_dotenv()
@@ -83,40 +109,67 @@ def demonstrate_tool_usage() -> None:
             azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
             azure_deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME"),
             openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
-            model_kwargs={"model": "gpt-4"},
+            model="gpt-4o",
             temperature=0
         )
         
         calculator = Calculator()
         
-        # System message that knows about the calculator
-        system_msg = SystemMessage(content="""
-            You are a helpful assistant with access to a calculator tool. 
-            When asked about calculations, use the calculator tool to ensure accuracy.
-        """)
+        print("\nPart 1: Direct Calculator Tool Usage")
+        print("-" * 40)
         
-        # Example 1: Simple calculation
+        # Example 1: Simple calculation with direct tool usage
         print("\nExample 1: Simple Calculation")
-        human_msg1 = HumanMessage(content="What is 15 * 7?")
-        messages = [system_msg, human_msg1]
-        
-        # The model can use the calculator tool
-        result = calculator._run("15 * 7")
+        expression1 = "12 * 1423"
+        result = calculator._run(expression1)
         print(f"Tool result: {result}")
         
-        response = chat_model.invoke(messages)
-        print(f"Model response: {response.content}")
-        
-        # Example 2: Complex calculation
+        # Example 2: Complex calculation with direct tool usage
         print("\nExample 2: Complex Calculation")
-        human_msg2 = HumanMessage(content="What is (25 - 5) / 4?")
-        messages = [system_msg, human_msg1, response, human_msg2]
-        
-        result = calculator._run("(25 - 5) / 4")
+        expression2 = "(30 - 5) / 4"
+        result = calculator._run(expression2)
         print(f"Tool result: {result}")
         
-        response = chat_model.invoke(messages)
-        print(f"Model response: {response.content}")
+        print("\nPart 2: Agent-based Calculator Usage")
+        print("-" * 40)
+        
+        # Create an agent with the calculator tool
+        tools = [
+            Tool(
+                name="Calculator",
+                func=calculator._run,
+                description="Useful for performing mathematical calculations. Input should be a mathematical expression."
+            )
+        ]
+
+        prompt = ChatPromptTemplate.from_template(prompt_template)
+        
+        # Create the agent with improved settings
+        agent = create_react_agent(
+            llm=chat_model,
+            tools=tools,
+            prompt=prompt
+        )
+        
+        # Create the agent executor with explicit safeguards
+        agent_executor = AgentExecutor.from_agent_and_tools(
+            agent=agent,
+            tools=tools,
+            verbose=True,
+            handle_parsing_errors=True,
+            max_iterations=3,  # Prevent infinite loops
+            early_stopping_method="generate"  # Helps handle edge cases
+        )
+        
+        # Example 1: Simple calculation with agent
+        print("\nExample 1: Simple Calculation (via Agent)")
+        result = agent_executor.invoke({"input": f"What is {expression1}?"})
+        print(f"Agent response: {result['output']}")
+        
+        # Example 2: Complex calculation with agent
+        print("\nExample 2: Complex Calculation (via Agent)")
+        result = agent_executor.invoke({"input": f"What is {expression2}?"})
+        print(f"Agent response: {result['output']}")
         
     except ValueError as ve:
         print(f"\nValidation error: {str(ve)}")

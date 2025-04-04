@@ -31,7 +31,9 @@ def init_chat_model():
     return AzureChatOpenAI(
         azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
         azure_deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME"),
-        openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION")
+        openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
+        model="gpt-4o",
+        temperature=0
     )
 
 def demonstrate_message_types():
@@ -77,5 +79,5 @@ if __name__ == "__main__":
 
 # Expected Output:
 # First Response: The three primary colors are red, blue, and yellow.
-# Second Response: When mixing the primary colors, you get purple (red + blue),
-# green (blue + yellow), and orange (red + yellow).
+# Second Response: When you mix the primary colors, red and blue make purple, 
+# blue and yellow make green, and red and yellow make orange.
