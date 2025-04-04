@@ -78,7 +78,9 @@ def init_chat_model():
     return AzureChatOpenAI(
         azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
         azure_deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME"),
-        openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION")
+        openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
+        model="gpt-4o",
+        temperature=0
     )
 
 def process_response(messages, functions, tools, chat_model):

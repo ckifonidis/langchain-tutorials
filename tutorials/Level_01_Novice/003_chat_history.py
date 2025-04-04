@@ -47,7 +47,9 @@ def init_chat_model():
     return AzureChatOpenAI(
         azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
         azure_deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME"),
-        openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION")
+        openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
+        model="gpt-4o",
+        temperature=0
     )
 
 def demonstrate_chat_history():
@@ -106,11 +108,13 @@ if __name__ == "__main__":
     main()
 
 # Expected Output:
+# Demonstrating LangChain Chat History Management...
 # First Response: The three primary colors are red, blue, and yellow.
-# Second Response: When mixing the primary colors, you get purple (red + blue),
-# green (blue + yellow), and orange (red + yellow).
-# Third Response: Of these secondary colors, purple is my favorite because it
-# combines the warmth of red with the depth of blue, creating a rich and
-# sophisticated color.
+# Second Response: When you mix the primary colors, you get the following secondary colors:
+# - Red and blue make purple.
+# - Blue and yellow make green.
+# - Yellow and red make orange.
+# Third Response: As an AI, I don't have personal preferences or feelings, so I don't have a favorite color.
+# However, many people appreciate purple for its rich and vibrant quality.
 # Total messages in history: 7
 # Chat history cleared.
