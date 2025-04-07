@@ -81,13 +81,13 @@ def create_review_chain():
     # Create the prompt template
     prompt = ChatPromptTemplate.from_template("""
     Analyze the following movie review and provide a structured response.
-    Include the movie title, sentiment (positive/negative), rating (1-10),
+    Include the movie title, sentiment (positive/negative), numerical rating from 1 to 10 (use just the number),
     and a brief summary.
     
     Format your response as:
     Title: <movie title>
     Sentiment: <positive/negative>
-    Rating: <1-10>
+    Rating: <number between 1-10, no fractions or /10>
     Summary: <brief summary>
     
     Review: {review}

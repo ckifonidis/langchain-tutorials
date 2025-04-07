@@ -26,6 +26,9 @@ typing-extensions>=4.8.0
 # JSON handling
 jsonschema>=4.20.0
 
+# Similarity search
+faiss-cpu>=1.10.0
+
 # Note: Some versions might need adjustment based on compatibility requirements
 # Install with: pip install -r requirements.txt
 
